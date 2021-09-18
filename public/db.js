@@ -6,7 +6,7 @@ let iDB = window.indexedDB.open("budget-track", 1);
 // On successfully opening, store the resulting database connection for use
 iDB.onsuccess = function (event) {
   console.log("Database initialized.");
-  db = event.result;
+  db = iDB.result;
 };
 
 // If there was a problem, not much we can do.
@@ -26,11 +26,10 @@ iDB.onupgradeneeded = function (event) {
 };
 
 // Save a copy of the offline transaction for later reupload
-function saveTransaction(trans) {
+function saveRecord(record) {
   const transaction = db.transaction(["offline transactions"], "readwrite");
   const store = transaction.objectStore("offline transactions");
-
-  store.add(trans);
+  store.add(record);
 }
 
 // Synchronizes the local database with the fetch API when online, then clears the database
@@ -41,10 +40,11 @@ function sync() {
 
   syncData.onsuccess = function () {
     if (syncData.result.length > 0) {
-      fetch("/api/transactions/bulk", {
+      fetch("/api/transaction/bulk", {
         method: "POST",
         body: JSON.stringify(syncData.result),
         headers: {
+          Accept: "application/json, text/plain, */*",
           "Content-Type": "application/json",
         },
       })
